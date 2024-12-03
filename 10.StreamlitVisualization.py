@@ -11,27 +11,31 @@ import statsmodels.api as sm
 
 
 # Import
-# Adjusted Dropbox links with direct download enabled
-csv_url = "https://www.dropbox.com/scl/fi/qrf6mh78lxhl7blojw8jq/TotCrimeRateAndControls.csv?rlkey=j745h7o6pbjdzgzg618iopqav&dl=1"
-geojson_url = "https://www.dropbox.com/scl/fi/d9l3t5bv7vt8uvyrdiocr/RadioData.geojson?rlkey=l38owj7hkbx06vvlend8sevkc&dl=1"
+if "tot_crime_rate" not in st.session_state:
+    with st.spinner("Loading crime data..."):
+        try:
+            csv_url = "https://www.dropbox.com/scl/fi/qrf6mh78lxhl7blojw8jq/TotCrimeRateAndControls.csv?rlkey=j745h7o6pbjdzgzg618iopqav&dl=1"
+            st.session_state.tot_crime_rate = pd.read_csv(csv_url)
+        except Exception as e:
+            st.error(f"Failed to load crime data: {e}")
+        else:
+            st.success("Crime data loaded successfully!", icon="✅")
 
-# Load the CSV file
-st.write("Loading crime data...")
-try:
-    tot_crime_rate = pd.read_csv(csv_url)
-    st.write("Crime data loaded successfully!")
-except Exception as e:
-    st.error(f"Failed to load crime data: {e}")
+if "gdf" not in st.session_state:
+    with st.spinner("Loading radio station data..."):
+        try:
+            geojson_url = "https://www.dropbox.com/scl/fi/d9l3t5bv7vt8uvyrdiocr/RadioData.geojson?rlkey=l38owj7hkbx06vvlend8sevkc&dl=1"
+            st.session_state.gdf = gpd.read_file(geojson_url)
+        except Exception as e:
+            st.error(f"Failed to load radio station data: {e}")
+        else:
+            st.success("Radio station data loaded successfully!", icon="✅")
 
-# Load the GeoJSON file
-st.write("Loading radio station data...")
-try:
-    gdf = gpd.read_file(geojson_url)
-    st.write("Radio station data loaded successfully!")
-except Exception as e:
-    st.error(f"Failed to load radio station data: {e}")
+# Data pre-processing
+tot_crime_rate = st.session_state.tot_crime_rate.copy()
+gdf = st.session_state.gdf.copy()
+
 tot_crime_rate.drop(columns=['state_fips', 'county_fips', 'county_level', 'state_level'], inplace=True)
-
 
 # Title
 st.title("Crime Rate and Hip Hop Coverage Map")
@@ -50,7 +54,11 @@ crime_cols = tot_crime_rate.columns[first_index:last_index+1]
 control_cols_all = tot_crime_rate.columns[last_index+1:]
 
 # Crime type selection
-crime_types = pd.Series(crime_cols).apply(lambda x: ast.literal_eval(x))
+def parse_tuple(s):
+    s = s.strip("()")  # Remove parentheses
+    return tuple(item.strip().strip("'\"") for item in s.split(","))
+
+crime_types = pd.Series(crime_cols).apply(parse_tuple)
 crimes = crime_types.apply(lambda x: x[1]).drop_duplicates()
 types = crime_types.apply(lambda x: x[0]).drop_duplicates()
 
