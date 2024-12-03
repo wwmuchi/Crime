@@ -69,7 +69,7 @@ types = crime_types.apply(lambda x: x[0]).drop_duplicates()
 
 crime_mapping = {c.replace('_', ' ').title(): c for c in crimes}
 display_crimes = list(crime_mapping.keys())
-crime_selection_display = st.selectbox("Select Crime", display_crimes, index=0)
+crime_selection_display = st.selectbox("Select Crime", display_crimes, index=1)
 
 type_mapping = {t.replace('_', ' ').title(): t for t in types}
 display_types = list(type_mapping.keys())
