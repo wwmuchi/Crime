@@ -15,7 +15,11 @@ if "tot_crime_rate" not in st.session_state:
     with st.spinner("Loading crime data..."):
         try:
             csv_url = "https://www.dropbox.com/scl/fi/qrf6mh78lxhl7blojw8jq/TotCrimeRateAndControls.csv?rlkey=j745h7o6pbjdzgzg618iopqav&dl=1"
-            st.session_state.tot_crime_rate = pd.read_csv(csv_url)
+            st.session_state.tot_crime_rate = pd.read_csv(
+                csv_url,
+                dtype={7: 'category', 8: 'category'}  # Assuming columns 7 and 8 have mixed types
+            )
+
         except Exception as e:
             st.error(f"Failed to load crime data: {e}")
         else:
